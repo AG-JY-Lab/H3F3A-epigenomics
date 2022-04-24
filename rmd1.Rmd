@@ -1,0 +1,31 @@
+---
+title: "Sample"
+author: "Joshua Soon"
+date: '2022-04-05'
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+library(yaml)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+source(here("src", "functions.R"))
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+results <- add_two_numbers(1232, 5374)
+print(results)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+y <- yaml.load_file("config.yml")
+
+print(y$Parameter_2$Parameter_2a)
+print(typeof(y$Paramater_1))
+
+```
+
