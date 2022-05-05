@@ -12,8 +12,13 @@ This repository will serve as a template for other R-based repositories to be ba
 ## Dependencies:
 
 [ChIPseeker](https://bioconductor.org/packages/release/bioc/html/ChIPseeker.html)
+
 [clusterProfiler](https://bioconductor.org/packages/release/bioc/html/clusterProfiler.html)
+
 [GenomicFeatures](https://bioconductor.org/packages/release/bioc/html/GenomicFeatures.html)
+
 [TxDb.Hsapiens.UCSC.hg38.knownGene](https://bioconductor.org/packages/release/data/annotation/html/TxDb.Hsapiens.UCSC.hg38.knownGene.html)
+
 [DOSE](https://bioconductor.org/packages/release/bioc/html/DOSE.html)
+
 [ReactomePA](https://bioconductor.org/packages/release/bioc/html/DOSE.html)
