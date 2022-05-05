@@ -1,4 +1,1 @@
-Paramater_1: "abcde"
-Parameter_2:
-  Parameter_2a: "ggg"
-  Parameter_2b: "gggggg"
+Narrow_peaks_bed: "./data/H3_3_peaks.narrowPeak"
