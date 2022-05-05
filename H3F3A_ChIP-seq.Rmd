@@ -7,25 +7,122 @@ editor_options:
   chunk_output_type: console
 ---
 
+Load essential libraries for relative pathing and yaml parsing.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 library(here)
 library(yaml)
 ```
 
+
+Load the config file with data paths.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
-source(here("src", "functions.R"))
+config <- yaml.load_file("config.yml")
+print(config$Narrow_peaks_bed)
 ```
 
+
+Load the libraries specific to this project.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
-results <- add_two_numbers(1232, 5374)
-print(results)
+library(ChIPseeker)
+library(clusterProfiler)
+library(GenomicFeatures)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(ReactomePA)
+library(DOSE)
 ```
 
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-y <- yaml.load_file("config.yml")
 
-print(y$Parameter_2$Parameter_2a)
-print(typeof(y$Paramater_1))
+Distribution of ChIP-seq peaks across all chromosomes.
+```{r echo=False, warning=False, message=False}
+narrow_peaks <- readPeakFile(config$Narrow_peaks_bed)
+# Might take some time to render
+covplot(narrow_peaks)
+```
+
+
+Load annotation database for region specific analysis of peak occupancy.
+```{r echo=False, warning=False, message=False}
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+```
+
+
+Profile of ChIP peaks binding to TSS regions
+First of all, for calculating the profile of ChIP peaks binding to TSS regions, we should prepare the TSS regions, which are defined as the flanking sequence of the TSS sites.
+Then align the peaks that are mapping to these regions, and generate the tagMatrix.
+
+getTagMatrix()
+  windows	
+    a collection of region
+  
+  type	
+    one of "start_site", "end_site", "body"
+  
+  by	
+    one of 'gene', 'transcript', 'exon', 'intron' , '3UTR' , '5UTR'
+    
+Heatmap of ChIP peaks binding to TSS regions
+```{r echo=False, warning=False, message=False}
+promoters <- getPromoters(TxDb=txdb, upstream=3000, downstream=3000)
+tagMatrix <- getTagMatrix(narrow_peaks, windows=promoters)
+
+peakHeatmap(narrow_peaks, TxDb=txdb, upstream=3000, downstream=3000, color="red")
+```
+
+
+Average Profile of ChIP peaks binding to TSS region
+```{r echo=False, warning=False, message=False}
+peofile_plot <- plotAvgProf(tagMatrix, xlim=c(-3000, 3000),
+                            xlab="Genomic Region (5'->3')",
+                            ylab = "Read Count Frequency")
+
+peofile_plot
+```
+
+
+Confidence interval estimated by bootstrap method is also supported for characterizing ChIP binding profiles.
+```{r echo=False, warning=False, message=False}
+plotAvgProf(tagMatrix, xlim=c(-3000, 3000), conf = 0.95, resample = 1000)
+```
+
+
+
+```{r echo=False, warning=False, message=False}
 
 ```
+
+
+
+```{r echo=False, warning=False, message=False}
+
+```
+
+
+```{r echo=False, warning=False, message=False}
+
+```
+
+
+
+```{r echo=False, warning=False, message=False}
+
+```
+
+
+
+```{r echo=False, warning=False, message=False}
+
+```
+
+
+
+```{r echo=False, warning=False, message=False}
+
+```
+
+
+
+```{r echo=False, warning=False, message=False}
+
+```
+
 
