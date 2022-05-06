@@ -142,12 +142,13 @@
       "Package": "ChIPseeker",
       "Version": "1.32.0",
       "Source": "Bioconductor",
+      "RemoteType": "bioconductor",
       "Remotes": "GuangchuangYu/enrichplot",
       "git_url": "https://git.bioconductor.org/packages/ChIPseeker",
       "git_branch": "RELEASE_3_15",
       "git_last_commit": "78188dc",
       "git_last_commit_date": "2022-04-26",
-      "Hash": "ff0225a7e344ae498aa18f8fa4d4fb4a",
+      "Hash": "193384eba6eee0035c3ccb6a985e8d83",
       "Requirements": [
         "AnnotationDbi",
         "BiocGenerics",
@@ -1150,12 +1151,13 @@
       "Package": "ggtree",
       "Version": "3.4.0",
       "Source": "Bioconductor",
+      "RemoteType": "bioconductor",
       "Remotes": "GuangchuangYu/treeio",
       "git_url": "https://git.bioconductor.org/packages/ggtree",
       "git_branch": "RELEASE_3_15",
       "git_last_commit": "23f08a3",
       "git_last_commit_date": "2022-04-26",
-      "Hash": "d177d1ae1d0a1d725031bc9da9774e23",
+      "Hash": "04572487a803db1af787216dcd96761b",
       "Requirements": [
         "ape",
         "aplot",
@@ -1500,6 +1502,15 @@
       "Hash": "cf4329aac12c2c44089974559c18e446",
       "Requirements": [
         "askpass"
+      ]
+    },
+    "org.Hs.eg.db": {
+      "Package": "org.Hs.eg.db",
+      "Version": "3.15.0",
+      "Source": "Bioconductor",
+      "Hash": "ea73036cd4946b4577e0aa9e51d0a61b",
+      "Requirements": [
+        "AnnotationDbi"
       ]
     },
     "patchwork": {
