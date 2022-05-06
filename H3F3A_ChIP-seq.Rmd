@@ -71,11 +71,11 @@ peakHeatmap(narrow_peaks, TxDb=txdb, upstream=3000, downstream=3000, color="red"
 
 Average Profile of ChIP peaks binding to TSS region
 ```{r echo=False, warning=False, message=False}
-peofile_plot <- plotAvgProf(tagMatrix, xlim=c(-3000, 3000),
+profile_plot <- plotAvgProf(tagMatrix, xlim=c(-3000, 3000),
                             xlab="Genomic Region (5'->3')",
                             ylab = "Read Count Frequency")
 
-peofile_plot
+profile_plot
 ```
 
 
@@ -84,13 +84,16 @@ Confidence interval estimated by bootstrap method is also supported for characte
 # Might take awhile due to the bootstrap sampling.
 # Bootstrap sampling uses multi-core and if a job fails on one core, no results will be returned.
 # This is slightly buggy on WSL2 Ubuntu but needs to be tried on bare metal.
+# Works well on native Ubuntu 20.04
 plotAvgProf(tagMatrix, xlim=c(-3000, 3000), conf = 0.95, resample = 1000)
 ```
 
 
 
 ```{r echo=False, warning=False, message=False}
-
+plotPeakProf2(peak = narrow_peaks, upstream = rel(0.2), downstream = rel(0.2),
+              conf = 0.95, by = "gene", type = "body", nbin = 800,
+              TxDb = txdb, weightCol = "V7",ignore_strand = F)
 ```
 
 
