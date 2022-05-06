@@ -81,6 +81,9 @@ peofile_plot
 
 Confidence interval estimated by bootstrap method is also supported for characterizing ChIP binding profiles.
 ```{r echo=False, warning=False, message=False}
+# Might take awhile due to the bootstrap sampling.
+# Bootstrap sampling uses multi-core and if a job fails on one core, no results will be returned.
+# This is slightly buggy on WSL2 Ubuntu but needs to be tried on bare metal.
 plotAvgProf(tagMatrix, xlim=c(-3000, 3000), conf = 0.95, resample = 1000)
 ```
 
