@@ -29,6 +29,7 @@ library(GenomicFeatures)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(ReactomePA)
 library(DOSE)
+library(org.Hs.eg.db)
 ```
 
 
@@ -89,17 +90,31 @@ plotAvgProf(tagMatrix, xlim=c(-3000, 3000), conf = 0.95, resample = 1000)
 ```
 
 
-
+Profile of ChIP peaks binding to body regions
 ```{r echo=False, warning=False, message=False}
-plotPeakProf2(peak = narrow_peaks, upstream = rel(0.2), downstream = rel(0.2),
-              conf = 0.95, by = "gene", type = "body", nbin = 800,
-              TxDb = txdb, weightCol = "V7",ignore_strand = F)
+## The first method using getBioRegion(), getTagMatrix() and plotPeakProf() to plot in three steps.
+# preparing matrix with extension from (TSS-20%)~(TTS+20%)... 
+# 119 peaks(1.022512%), having lengths smaller than 100bp, are filtered...
+
+genebody <- getBioRegion(TxDb = txdb, by = "gene", type = "body")
+
+matrix <- getTagMatrix(narrow_peaks, windows = genebody, nbin = 100, upstream = rel(0.2), downstream = rel(0.2))
+
+peak_profile <- plotPeakProf(matrix, conf = 0.95)
+
+peak_profile
 ```
 
 
-
+Peak Annotation and Visualizing Genomic Annotation
 ```{r echo=False, warning=False, message=False}
+narrow_peaks_Anno <- annotatePeak(narrow_peaks, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
 
+pie_chart <- plotAnnoPie(narrow_peaks_Anno)
+pie_chart
+
+bar_chart <- plotAnnoBar(narrow_peaks_Anno)
+bar_chart
 ```
 
 
