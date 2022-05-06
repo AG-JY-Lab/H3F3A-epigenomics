@@ -111,19 +111,29 @@ Peak Annotation and Visualizing Genomic Annotation
 narrow_peaks_Anno <- annotatePeak(narrow_peaks, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
 
 pie_chart <- plotAnnoPie(narrow_peaks_Anno)
-pie_chart
+pie_chart # Does not actually work (shows list of 2 instead of typical list of 9)
 
 bar_chart <- plotAnnoBar(narrow_peaks_Anno)
 bar_chart
+
+venn_pie <- vennpie(narrow_peaks_Anno)
+venn_pie # Does not also work (shows list of 2 instead of typical list of 9) and plots it directly
+
+upset_plot <- upsetplot(narrow_peaks_Anno)
+upset_plot
+
+venn_pie_upset_combined <- upsetplot(narrow_peaks_Anno, vennpie=TRUE)
+venn_pie_upset_combined
 ```
 
 
+Visualize distribution of TF-binding loci relative to TSS
 ```{r echo=False, warning=False, message=False}
-
+plotDistToTSS(narrow_peaks_Anno, title="Distribution of H3F3A-binding loci relative to TSS")
 ```
 
 
-
+Functional enrichment analysis
 ```{r echo=False, warning=False, message=False}
 
 ```
