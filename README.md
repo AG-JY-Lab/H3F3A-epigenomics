@@ -25,6 +25,10 @@ This repository will serve as a template for other R-based repositories to be ba
 
 - [ReactomePA](https://bioconductor.org/packages/release/bioc/html/DOSE.html) 3.22.0
 
+- `ggupset` upsetplot requires this.
+
+- `ggimage` vennpie combined requires this.
+
 - `libcurl4-openssl-dev`
 
 - `libssl-dev`
