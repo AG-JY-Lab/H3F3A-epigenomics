@@ -32,3 +32,5 @@ This repository will serve as a template for other R-based repositories to be ba
 - `libcurl4-openssl-dev`
 
 - `libssl-dev`
+
+- `libmagick++-dev`
