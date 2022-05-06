@@ -1,5 +1,5 @@
 ---
-title: "Sample"
+title: "H3F3A ChIP-seq analysis"
 author: "Joshua Soon"
 date: '2022-04-05'
 output: html_document
@@ -133,27 +133,57 @@ plotDistToTSS(narrow_peaks_Anno, title="Distribution of H3F3A-binding loci relat
 ```
 
 
-Functional enrichment analysis
-```{r echo=False, warning=False, message=False}
+Functional enrichment analysis with:
+1. Reactome PA ORA
+2. GO BP ORA
+3. GO CC ORA
+4. GO MF ORA
 
+1. Reactome PA ORA
+```{r echo=False, warning=False, message=False}
+pathways <- enrichPathway(as.data.frame(narrow_peaks_Anno)$geneId, organism = "human")
+
+pathways_dotplot <- dotplot(pathways, showCategory=10)
+pathways_dotplot
+
+pathways_barplot <- barplot(pathways)
+pathways_barplot
 ```
 
 
-
+2. GO BP ORA
 ```{r echo=False, warning=False, message=False}
+enrich_GO_BP <- enrichGO(as.data.frame(narrow_peaks_Anno)$geneId,  OrgDb = org.Hs.eg.db, ont = "BP")
 
+go_bp_dotplot <- dotplot(enrich_GO_BP, showCategory=10)
+go_bp_dotplot
+
+go_bp_barplot <- barplot(enrich_GO_BP)
+go_bp_barplot
 ```
 
 
-
+3. GO CC ORA
 ```{r echo=False, warning=False, message=False}
+enrich_GO_CC <- enrichGO(as.data.frame(narrow_peaks_Anno)$geneId,  OrgDb = org.Hs.eg.db, ont = "CC")
 
+go_cc_dotplot <- dotplot(enrich_GO_CC, showCategory=10)
+go_cc_dotplot
+
+go_cc_barplot <- barplot(enrich_GO_CC)
+go_cc_barplot
 ```
 
 
-
+4. GO MF ORA
 ```{r echo=False, warning=False, message=False}
+enrich_GO_MF <- enrichGO(as.data.frame(narrow_peaks_Anno)$geneId,  OrgDb = org.Hs.eg.db, ont = "MF")
 
+go_MF_dotplot <- dotplot(enrich_GO_MF, showCategory=10)
+go_MF_dotplot
+
+go_MF_barplot <- barplot(enrich_GO_MF)
+go_MF_barplot
 ```
 
 
