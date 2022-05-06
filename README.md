@@ -19,7 +19,7 @@ This repository will serve as a template for other R-based repositories to be ba
 
 - [TxDb.Hsapiens.UCSC.hg38.knownGene](https://bioconductor.org/packages/release/data/annotation/html/TxDb.Hsapiens.UCSC.hg38.knownGene.html) 3.15.0
 
-- [org.Hs.eg.db] (https://bioconductor.org/packages/release/data/annotation/html/org.Hs.eg.db.html) 3.15.0
+- [org.Hs.eg.db](https://bioconductor.org/packages/release/data/annotation/html/org.Hs.eg.db.html) 3.15.0
 
 - [DOSE](https://bioconductor.org/packages/release/bioc/html/DOSE.html) 3.22.0
 
