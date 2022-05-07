@@ -32,6 +32,11 @@ library(DOSE)
 library(org.Hs.eg.db)
 ```
 
+```{r}
+library(ggupset)
+library(ggimage)
+```
+
 
 Distribution of ChIP-seq peaks across all chromosomes.
 ```{r echo=False, warning=False, message=False}

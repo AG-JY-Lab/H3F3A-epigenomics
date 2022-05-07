@@ -1079,6 +1079,22 @@
         "rlang"
       ]
     },
+    "ggimage": {
+      "Package": "ggimage",
+      "Version": "0.3.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a7919e11761293f25eeb1562d3e4342a",
+      "Requirements": [
+        "ggfun",
+        "ggplot2",
+        "ggplotify",
+        "jsonlite",
+        "magick",
+        "scales",
+        "tibble"
+      ]
+    },
     "ggplot2": {
       "Package": "ggplot2",
       "Version": "3.3.6",
@@ -1172,6 +1188,20 @@
         "tidytree",
         "treeio",
         "yulab.utils"
+      ]
+    },
+    "ggupset": {
+      "Package": "ggupset",
+      "Version": "0.3.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8e9eb92bf465601c07d17c5e8b75dce1",
+      "Requirements": [
+        "ggplot2",
+        "gtable",
+        "rlang",
+        "scales",
+        "tibble"
       ]
     },
     "glue": {
@@ -1426,6 +1456,18 @@
       "Requirements": [
         "glue",
         "rlang"
+      ]
+    },
+    "magick": {
+      "Package": "magick",
+      "Version": "2.7.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "56fbad418aa50939ed8c3028126af8d7",
+      "Requirements": [
+        "Rcpp",
+        "curl",
+        "magrittr"
       ]
     },
     "magrittr": {
