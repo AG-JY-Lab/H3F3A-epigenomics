@@ -23,7 +23,7 @@ This repository will serve as a template for other R-based repositories to be ba
 
 - [DOSE](https://bioconductor.org/packages/release/bioc/html/DOSE.html) 3.22.0
 
-- [ReactomePA](https://bioconductor.org/packages/release/bioc/html/DOSE.html) 1.40.0
+- [ReactomePA](https://bioconductor.org/packages/release/bioc/html/ReactomePA.html) 1.40.0
 
 - `ggupset` upsetplot requires this.
 
