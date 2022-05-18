@@ -53,7 +53,30 @@ narrow_peaks_Anno <- annotatePeak(narrow_peaks, tssRegion=c(-3000, 3000), TxDb=t
 
 
 
-Extract entrez gene IDs and get unique ones
+Extract entrez gene IDs from ChIP-seq data and only keep unique ones
 ```{r echo=False, warning=False, message=False}
-ChIP_seq_genes <- unique(as.data.frame(narrow_peaks_Anno)$geneId)
+ChIP_seq_entrez_IDs <- unique(as.data.frame(narrow_peaks_Anno)$geneId)
+```
+
+
+
+Extract Gene symbols from RNA-seq data and convert to entrez IDs amd keep only unique ones
+```{r echo=False, warning=False, message=False}
+RNA_seq_gene_symbols <- unique(RNA_seq_data$gene)
+RNA_seq_entrez_IDs <- mapIds(org.Hs.eg.db, RNA_seq_gene_symbols, 'ENTREZID', 'SYMBOL')
+```
+
+
+Intersect genes between ChIP-seq and RNA-seq
+```{r echo=False, warning=False, message=False}
+common_genes <- intersect(ChIP_seq_entrez_IDs, RNA_seq_entrez_IDs)
+background_genes <- union(ChIP_seq_entrez_IDs, RNA_seq_entrez_IDs)
+```
+
+
+
+```{r echo=False, warning=False, message=False}
+
+
+
 ```
