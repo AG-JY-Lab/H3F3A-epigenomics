@@ -1,2 +1,3 @@
-Narrow_peaks_bed: "./data/ChIP-seq/H3_3_peaks.narrowPeak"
-RNAseq_DEGs: "./data/RNA-seq_outputs/significant_genes_H3F3A_KD_vs_Control.csv"
+Paths:
+  Narrow_peaks_bed: "./data/ChIP-seq/H3_3_peaks.narrowPeak"
+  RNAseq_DEGs: "./data/RNA-seq_outputs/significant_genes_H3F3A_KD_vs_Control.csv"
