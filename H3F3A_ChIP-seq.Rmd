@@ -17,7 +17,7 @@ library(yaml)
 Load the config file with data paths.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 config <- yaml.load_file("config.yml")
-print(config$Narrow_peaks_bed)
+print(config$Paths$Narrow_peaks_bed)
 ```
 
 
@@ -40,7 +40,7 @@ library(ggimage)
 
 Distribution of ChIP-seq peaks across all chromosomes.
 ```{r echo=False, warning=False, message=False}
-narrow_peaks <- readPeakFile(config$Narrow_peaks_bed)
+narrow_peaks <- readPeakFile(config$Paths$Narrow_peaks_bed)
 # Might take some time to render
 covplot(narrow_peaks)
 ```
