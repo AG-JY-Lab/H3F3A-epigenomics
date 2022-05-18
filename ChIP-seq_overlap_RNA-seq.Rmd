@@ -1,0 +1,21 @@
+---
+title: "H3.3 ChIP-seq overlapped with RNA-seq of siH3.3"
+author: "Joshua Soon"
+date: '2022-18-05'
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Load essential libraries for relative pathing and yaml parsing.
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+library(yaml)
+```
+
+
+Load the config file with data paths.
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+config <- yaml.load_file("config.yml")
+print(config$RNAseq_DEGs)
+```
