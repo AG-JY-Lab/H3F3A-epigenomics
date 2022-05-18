@@ -17,5 +17,43 @@ library(yaml)
 Load the config file with data paths.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 config <- yaml.load_file("config.yml")
-print(config$RNAseq_DEGs)
+```
+
+
+
+Load the libraries specific to this project.
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(ChIPseeker)
+library(clusterProfiler)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(ReactomePA)
+library(DOSE)
+library(org.Hs.eg.db)
+```
+
+
+
+Load data
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+RNA_seq_data_file <- config$Paths$RNAseq_DEGs
+ChIP_seq_data_file <- config$Paths$Narrow_peaks_bed
+
+RNA_seq_data <- read.csv(RNA_seq_data_file)
+
+narrow_peaks <- readPeakFile(ChIP_seq_data_file)
+```
+
+
+
+Load annotation database for region specific analysis of peak occupancy and peak annotations.
+```{r echo=False, warning=False, message=False}
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+narrow_peaks_Anno <- annotatePeak(narrow_peaks, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+```
+
+
+
+Extract entrez gene IDs and get unique ones
+```{r echo=False, warning=False, message=False}
+ChIP_seq_genes <- unique(as.data.frame(narrow_peaks_Anno)$geneId)
 ```
