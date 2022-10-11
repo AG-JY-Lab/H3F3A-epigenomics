@@ -1,5 +1,5 @@
 ---
-title: "Sample"
+title: "H3F3A ChIP-seq analysis"
 author: "Joshua Soon"
 date: '2022-04-05'
 output: html_document
@@ -7,25 +7,215 @@ editor_options:
   chunk_output_type: console
 ---
 
+Load essential libraries for relative pathing and yaml parsing.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 library(here)
 library(yaml)
 ```
 
+
+Load the config file with data paths.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
-source(here("src", "functions.R"))
+config <- yaml.load_file("config.yml")
+print(config$Paths$Narrow_peaks_bed)
 ```
 
+
+Load the libraries specific to this project.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
-results <- add_two_numbers(1232, 5374)
-print(results)
+library(ChIPseeker)
+library(clusterProfiler)
+library(GenomicFeatures)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(ReactomePA)
+library(DOSE)
+library(org.Hs.eg.db)
 ```
 
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-y <- yaml.load_file("config.yml")
-
-print(y$Parameter_2$Parameter_2a)
-print(typeof(y$Paramater_1))
-
+```{r}
+library(ggupset)
+library(ggimage)
 ```
+
+
+Distribution of ChIP-seq peaks across all chromosomes.
+```{r echo=False, warning=False, message=False}
+narrow_peaks <- readPeakFile(config$Paths$Narrow_peaks_bed)
+# Might take some time to render
+covplot(narrow_peaks) + theme(axis.text.y=element_blank())
+```
+
+
+Load annotation database for region specific analysis of peak occupancy.
+```{r echo=False, warning=False, message=False}
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+```
+
+
+Profile of ChIP peaks binding to TSS regions
+First of all, for calculating the profile of ChIP peaks binding to TSS regions, we should prepare the TSS regions, which are defined as the flanking sequence of the TSS sites.
+Then align the peaks that are mapping to these regions, and generate the tagMatrix.
+
+getTagMatrix()
+  windows	
+    a collection of region
+  
+  type	
+    one of "start_site", "end_site", "body"
+  
+  by	
+    one of 'gene', 'transcript', 'exon', 'intron' , '3UTR' , '5UTR'
+    
+Heatmap of ChIP peaks binding to TSS regions
+```{r echo=False, warning=False, message=False}
+promoters <- getPromoters(TxDb=txdb, upstream=3000, downstream=3000)
+tagMatrix <- getTagMatrix(narrow_peaks, windows=promoters)
+
+peakHeatmap(narrow_peaks, TxDb=txdb, upstream=3000, downstream=3000, color="red")
+```
+
+
+Average Profile of ChIP peaks binding to TSS region
+```{r echo=False, warning=False, message=False}
+profile_plot <- plotAvgProf(tagMatrix, xlim=c(-3000, 3000),
+                            xlab="Genomic Region (5'->3')",
+                            ylab = "Read Count Frequency")
+
+profile_plot
+```
+
+
+Confidence interval estimated by bootstrap method is also supported for characterizing ChIP binding profiles.
+```{r echo=False, warning=False, message=False}
+# Might take awhile due to the bootstrap sampling.
+# Bootstrap sampling uses multi-core and if a job fails on one core, no results will be returned.
+# This is slightly buggy on WSL2 Ubuntu but needs to be tried on bare metal.
+# Works well on native Ubuntu 20.04
+plotAvgProf(tagMatrix, xlim=c(-3000, 3000), conf = 0.95, resample = 1000)
+```
+
+
+Profile of ChIP peaks binding to body regions
+```{r echo=False, warning=False, message=False}
+## The first method using getBioRegion(), getTagMatrix() and plotPeakProf() to plot in three steps.
+# preparing matrix with extension from (TSS-20%)~(TTS+20%)... 
+# 119 peaks(1.022512%), having lengths smaller than 100bp, are filtered...
+
+genebody <- getBioRegion(TxDb = txdb, by = "gene", type = "body")
+
+matrix <- getTagMatrix(narrow_peaks, windows = genebody, nbin = 100, upstream = rel(0.2), downstream = rel(0.2))
+
+peak_profile <- plotPeakProf(matrix, conf = 0.95)
+
+peak_profile
+```
+
+
+Peak Annotation and Visualizing Genomic Annotation
+```{r echo=False, warning=False, message=False}
+narrow_peaks_Anno <- annotatePeak(narrow_peaks, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+
+pie_chart <- plotAnnoPie(narrow_peaks_Anno)
+pie_chart # Does not actually work (shows list of 2 instead of typical list of 9)
+
+bar_chart <- plotAnnoBar(narrow_peaks_Anno)
+bar_chart
+
+venn_pie <- vennpie(narrow_peaks_Anno)
+venn_pie # Does not also work (shows list of 2 instead of typical list of 9) and plots it directly
+
+upset_plot <- upsetplot(narrow_peaks_Anno)
+upset_plot
+
+venn_pie_upset_combined <- upsetplot(narrow_peaks_Anno, vennpie=TRUE)
+venn_pie_upset_combined
+```
+
+
+Visualize distribution of TF-binding loci relative to TSS
+```{r echo=False, warning=False, message=False}
+plotDistToTSS(narrow_peaks_Anno, title="Distribution of H3F3A-binding loci relative to TSS")
+```
+
+
+Functional enrichment analysis with:
+1. Reactome PA ORA
+2. GO BP ORA
+3. GO CC ORA
+4. GO MF ORA
+5. Disease gene network enrichment
+
+
+1. Reactome PA ORA
+```{r echo=False, warning=False, message=False}
+pathways <- enrichPathway(as.data.frame(narrow_peaks_Anno)$geneId, organism = "human")
+
+pathways_dotplot <- dotplot(pathways, showCategory=10)
+pathways_dotplot
+
+pathways_barplot <- barplot(pathways)
+pathways_barplot
+```
+
+
+2. GO BP ORA
+```{r echo=False, warning=False, message=False}
+enrich_GO_BP <- enrichGO(as.data.frame(narrow_peaks_Anno)$geneId,  OrgDb = org.Hs.eg.db, ont = "BP")
+
+go_bp_dotplot <- dotplot(enrich_GO_BP, showCategory=10)
+go_bp_dotplot
+
+go_bp_barplot <- barplot(enrich_GO_BP)
+go_bp_barplot
+```
+
+
+3. GO CC ORA
+```{r echo=False, warning=False, message=False}
+enrich_GO_CC <- enrichGO(as.data.frame(narrow_peaks_Anno)$geneId,  OrgDb = org.Hs.eg.db, ont = "CC")
+
+go_cc_dotplot <- dotplot(enrich_GO_CC, showCategory=10)
+go_cc_dotplot
+
+go_cc_barplot <- barplot(enrich_GO_CC)
+go_cc_barplot
+```
+
+
+4. GO MF ORA
+```{r echo=False, warning=False, message=False}
+enrich_GO_MF <- enrichGO(as.data.frame(narrow_peaks_Anno)$geneId,  OrgDb = org.Hs.eg.db, ont = "MF")
+
+go_MF_dotplot <- dotplot(enrich_GO_MF, showCategory=10)
+go_MF_dotplot
+
+go_MF_barplot <- barplot(enrich_GO_MF)
+go_MF_barplot
+```
+
+
+5. Disease gene network enrichment
+```{r echo=False, warning=False, message=False}
+enrich_DGN <- enrichDGN(as.data.frame(narrow_peaks_Anno)$geneId)
+head(enrich_DGN)
+
+DGN_dotplot <- dotplot(enrich_DGN, showCategory=10)
+DGN_dotplot
+```
+
+
+6. GSEA for network of cancer genes
+```{r echo=False, warning=False, message=False}
+### Not working yet ###
+ncg <- gseNCG(as.data.frame(narrow_peaks_Anno)$geneId,
+              pvalueCutoff  = 0.5,
+              pAdjustMethod = "BH",
+              verbose       = FALSE)
+ncg <- setReadable(ncg, 'org.Hs.eg.db')
+head(ncg)
+
+ncg_dotplot <- dotplot(ncg, showCategory=10)
+ncg_dotplot
+```
+
 

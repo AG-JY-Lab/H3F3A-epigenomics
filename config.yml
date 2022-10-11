@@ -1,4 +1,3 @@
-Paramater_1: "abcde"
-Parameter_2:
-  Parameter_2a: "ggg"
-  Parameter_2b: "gggggg"
+Paths:
+  Narrow_peaks_bed: "./data/ChIP-seq/H3_3_peaks.narrowPeak"
+  RNAseq_DEGs: "./data/RNA-seq_outputs/significant_genes_H3F3A_KD_vs_Control.csv"
