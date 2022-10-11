@@ -1,3 +1,4 @@
 Paths:
   Narrow_peaks_bed: "./data/ChIP-seq/H3_3_peaks.narrowPeak"
+  BETA_H3F3A_uptarget_associate_peaks: "./data/ChIP-seq/H3F3A_uptarget_associate_peaks.bed"
   RNAseq_DEGs: "./data/RNA-seq_outputs/significant_genes_H3F3A_KD_vs_Control.csv"

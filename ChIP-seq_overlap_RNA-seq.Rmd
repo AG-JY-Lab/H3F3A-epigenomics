@@ -37,10 +37,22 @@ Load data
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 RNA_seq_data_file <- config$Paths$RNAseq_DEGs
 ChIP_seq_data_file <- config$Paths$Narrow_peaks_bed
+BETA_H3F3A_uptarget_associate_peaks <- config$Paths$BETA_H3F3A_uptarget_associate_peaks
 
 RNA_seq_data <- read.csv(RNA_seq_data_file)
 
 narrow_peaks <- readPeakFile(ChIP_seq_data_file)
+BETA_peaks <- readPeakFile(BETA_H3F3A_uptarget_associate_peaks)
+```
+
+
+
+Heatmap of BETA detected H3F3A peaks associated with transcriptional up-regulation
+```{r echo=False, warning=False, message=False}
+BETA_promoters <- getPromoters(TxDb=txdb, upstream=3000, downstream=3000)
+BETA_tagMatrix <- getTagMatrix(BETA_peaks, windows=promoters)
+
+peakHeatmap(BETA_peaks, TxDb=txdb, upstream=3000, downstream=3000, color="red")
 ```
 
 
