@@ -42,7 +42,7 @@ Distribution of ChIP-seq peaks across all chromosomes.
 ```{r echo=False, warning=False, message=False}
 narrow_peaks <- readPeakFile(config$Paths$Narrow_peaks_bed)
 # Might take some time to render
-covplot(narrow_peaks)
+covplot(narrow_peaks) + theme(axis.text.y=element_blank())
 ```
 
 
