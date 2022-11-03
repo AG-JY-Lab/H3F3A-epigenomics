@@ -1,0 +1,7 @@
+	sampletype	phenotype
+siSCR_1	Control	Normal
+siSCR_2	Control	Normal
+siSCR_3	Control	Normal
+siH3F3A_1	H3F3A_KD	Migration_reduced
+siH3F3A_2	H3F3A_KD	Migration_reduced
+siH3F3A_3	H3F3A_KD	Migration_reduced
