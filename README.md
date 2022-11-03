@@ -3,16 +3,52 @@
 Project on investigating the role of H3F3A in Alveolar Rhabdomyosarcoma.
 
 ## Contents:
-### 1. H3F3A_ChIP-seq
+### 1. H3F3A_RNA-seq
+#### a. Merging STAR quantmode read counts
+- The read counts from STAR were merged into a single dataframe with `STARo2df`.
+#### b. Loading in count data, normalization & QC
+- De-duplicating and merging gene names.
+- Plotting count distributions for each sample.
+- Plotting variance vs mean counts for siH3F3A & siSCR samples to observe overdispersion trend.
+- Creating `DESeq2` object.
+#### c. DGE Hierarchical Clustering Heatmap & PCA
+- Plotting of PCA to show relationships between samples of a specific condition and detect possible outlier samples.
+- Hierarchical Clustering Heat-map from correlation values as a complimentary way to show the relationships between samples in the same condition and across conditions.
+#### d. Model fitting and hypothesis testing
+- Differential expression testing after defining contrast and Log2FoldChange shrinking.
+- Summarize results and preview
+
+        out of 28308 with nonzero total read count
+        adjusted p-value < 0.05
+        LFC > 0 (up)       : 54, 0.19%
+        LFC < 0 (down)     : 473, 1.7%
+        outliers [1]       : 0, 0%
+        low counts [2]     : 17592, 62%
+        (mean count < 129)
+
+- Setting thresholds for Log2FoldChange and adjusted p-value to filter results for significant differentially expressed genes.
+#### e. Visualization of DEGs
+- Differentially expressed genes bar graph.
+![](figures/RNA_seq_generic/DEG_barplot_600_400.svg)
+- Differentially expressed genes Volcano plot
+![](figures/RNA_seq_generic/Volcano_plot_800_600.svg)
+- Heatmap of Differentially expressed genes
+![](figures/RNA_seq_generic/DEG_Heatmap_800_600.svg)
+#### f. Enrichment analysis of significant DEGs
+- TODO 1
+- TODO 2
+- TODO 3
+
+### 2. H3F3A_ChIP-seq
 - This R-markdown contains the analysis code for functional enrichment of the genes found by ChIP-seq of H3F3A with sequencing reads aligned with Bowtie2 and peak calling with Macs2. The peaks used as inputs are the from the `.narrowPeak` file from Macs2.
 
-### 2. ChIP-seq_overlap_RNA-seq
+### 3. ChIP-seq_overlap_RNA-seq
 - This R-markdown contains the analysis code for intersecting the significantly differentially expressed genes from H3F3A knockdown RNA-seq and H3F3A ChIP-seq to identify the direct targets of H3F3A.
 
-### 3. [/data](./data)
+### 4. [/data](./data)
 This folder contains the data used for the analysis.
 
-### 4. [/figures](./figures)
+### 5. [/figures](./figures)
 This folder contains the figures exported at various steps of the analysis.
 
 ## The main rules to follow are:
