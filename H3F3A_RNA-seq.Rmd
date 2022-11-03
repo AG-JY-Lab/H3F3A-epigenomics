@@ -1,0 +1,593 @@
+---
+title: "H3F3A KD RNA-seq"
+author: "Joshua"
+date: "2022-11-03"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+# Basic generic imports
+Default dependencies here and yaml are required for config.yml parsing to obtain parameters.
+```{r echo=FALSE}
+library(here)
+library(yaml)
+```
+
+
+
+
+# 0. Merging STAR quantmode read counts
+
+Imports
+```{r echo=FALSE}
+library(plyr)
+```
+
+Load the config file and helper functions.
+```{r echo=FALSE}
+config <- yaml.load_file("./config.yml")
+source(here::here("src", "functions.R"))
+```
+
+Read the count data files and merge them into a single dataframe
+```{r echo=FALSE}
+RH41_siH3F3A_vs_siScr_samples <- config$Samples$RH41_siH3F3A_vs_siScr
+RH41_siH3F3A_vs_siScr_data_path <- config$Paths$RH41_siH3F3A_vs_siScr_data
+
+RH41_siH3F3A_vs_siScr_counts_df <- STARo2df(RH41_siH3F3A_vs_siScr_samples, RH41_siH3F3A_vs_siScr_data_path, gene_naming="HGNC")
+```
+
+
+
+# 1. Loading in count data, normalization & QC
+
+Imports
+```{r echo=FALSE}
+library(tidyverse)
+library(DESeq2)
+library(edgeR)
+library(ggplot2)
+```
+
+Check metadata path
+```{r echo=FALSE}
+print(config$Paths$RH41_siH3F3A_vs_siScr_meta)
+```
+
+Consolidate gene counts
+```{r echo=FALSE}
+# If there are duplicate gene names, take the sum of all read-counts.
+# TODO this can be improved upon.
+RH41_siH3F3A_vs_siScr_counts_consolidated <- {RH41_siH3F3A_vs_siScr_counts_df %>% group_by(HGNC) %>% summarise_all(sum)}
+# Convert the gene symbols to the row names.
+RH41_siH3F3A_vs_siScr_counts_final <- {RH41_siH3F3A_vs_siScr_counts_consolidated %>% remove_rownames %>% column_to_rownames(var="HGNC")}
+RH41_siH3F3A_vs_siScr_meta_path <- config$Paths$RH41_siH3F3A_vs_siScr_meta
+RH41_siH3F3A_vs_siScr_metadata <- read.table(RH41_siH3F3A_vs_siScr_meta_path, header=T, row.names=1)
+```
+
+Check that sample names match in both files
+```{r echo=FALSE}
+all(colnames(RH41_siH3F3A_vs_siScr_counts_final) %in% rownames(RH41_siH3F3A_vs_siScr_metadata))
+all(colnames(RH41_siH3F3A_vs_siScr_counts_final) == rownames(RH41_siH3F3A_vs_siScr_metadata))
+```
+
+Plot RNA-seq count distribution for all samples
+```{r echo=FALSE}
+# This can be done for other samples as well for QC-ing.
+ggplot(RH41_siH3F3A_vs_siScr_counts_final) +
+  xlim(-5, 100) +
+  geom_histogram(aes(x = siSCR_1), stat = "bin", bins = 100) +
+  xlab("Raw expression counts") +
+  ylab("Number of genes") +
+  ggtitle("Number of genes vs Raw expression counts \n for siSCR_1") +
+  theme(plot.title = element_text(hjust = 0.5, size=14))
+
+ggplot(RH41_siH3F3A_vs_siScr_counts_final) +
+  xlim(-5, 100) +
+  geom_histogram(aes(x = siSCR_2), stat = "bin", bins = 100) +
+  xlab("Raw expression counts") +
+  ylab("Number of genes") +
+  ggtitle("Number of genes vs Raw expression counts \n for siSCR_2") +
+  theme(plot.title = element_text(hjust = 0.5, size=14))
+
+ggplot(RH41_siH3F3A_vs_siScr_counts_final) +
+  xlim(-5, 100) +
+  geom_histogram(aes(x = siSCR_3), stat = "bin", bins = 100) +
+  xlab("Raw expression counts") +
+  ylab("Number of genes") +
+  ggtitle("Number of genes vs Raw expression counts \n for siSCR_3") +
+  theme(plot.title = element_text(hjust = 0.5, size=14))
+
+ggplot(RH41_siH3F3A_vs_siScr_counts_final) +
+  xlim(-5, 100) +
+  geom_histogram(aes(x = siH3F3A_1), stat = "bin", bins = 100) +
+  xlab("Raw expression counts") +
+  ylab("Number of genes") +
+  ggtitle("Number of genes vs Raw expression counts \n for siH3F3A_1") +
+  theme(plot.title = element_text(hjust = 0.5, size=14))
+
+ggplot(RH41_siH3F3A_vs_siScr_counts_final) +
+  xlim(-5, 100) +
+  geom_histogram(aes(x = siH3F3A_2), stat = "bin", bins = 100) +
+  xlab("Raw expression counts") +
+  ylab("Number of genes") +
+  ggtitle("Number of genes vs Raw expression counts \n for siH3F3A_2") +
+  theme(plot.title = element_text(hjust = 0.5, size=14))
+
+ggplot(RH41_siH3F3A_vs_siScr_counts_final) +
+  xlim(-5, 100) +
+  geom_histogram(aes(x = siH3F3A_3), stat = "bin", bins = 100) +
+  xlab("Raw expression counts") +
+  ylab("Number of genes") +
+  ggtitle("Number of genes vs Raw expression counts \n for siH3F3A_3") +
+  theme(plot.title = element_text(hjust = 0.5, size=14))
+```
+
+Modeling count data for Treatment and Control conditions.
+```{r echo=FALSE}
+siH3F3A_mean_counts <- apply(RH41_siH3F3A_vs_siScr_counts_final[, 1:3], 1, mean)
+siH3F3A_variance_counts <- apply(RH41_siH3F3A_vs_siScr_counts_final[, 1:3], 1, var)
+siH3F3A_variance_vs_means <- data.frame(siH3F3A_mean_counts, siH3F3A_variance_counts)
+ggplot(siH3F3A_variance_vs_means) +
+  geom_point(aes(x=siH3F3A_mean_counts, y=siH3F3A_variance_counts)) + 
+  geom_line(aes(x=siH3F3A_mean_counts, y=siH3F3A_mean_counts, color="red")) +
+  guides(color=guide_legend(title="siH3F3A\nvariance = mean")) +
+  scale_y_log10() +
+  scale_x_log10() +
+  ggtitle("Overdispersion plot for siH3F3A") +
+  theme(plot.title = element_text(hjust = 0.5, size=14))
+
+siScr_mean_counts <- apply(RH41_siH3F3A_vs_siScr_counts_final[, 4:6], 1, mean)
+siScr_variance_counts <- apply(RH41_siH3F3A_vs_siScr_counts_final[, 4:6], 1, var)
+siScr_variance_vs_means <- data.frame(siScr_mean_counts, siScr_variance_counts)
+ggplot(siScr_variance_vs_means) +
+  geom_point(aes(x=siScr_mean_counts, y=siScr_variance_counts)) + 
+  geom_line(aes(x=siScr_mean_counts, y=siScr_mean_counts, color="red")) +
+  guides(color=guide_legend(title="siSCR\nvariance = mean")) +
+  scale_y_log10() +
+  scale_x_log10() +
+  ggtitle("Overdispersion plot for siSCR") +
+  theme(plot.title = element_text(hjust = 0.5, size=14))
+```
+
+DESeq2 object
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# For all samples
+### Create DESeq2Dataset object
+RH41_siH3F3A_vs_siScr_dds <- DESeqDataSetFromMatrix(countData = round(RH41_siH3F3A_vs_siScr_counts_final),
+                                                    colData = RH41_siH3F3A_vs_siScr_metadata,
+                                                    design = ~ sampletype)
+
+View(counts(RH41_siH3F3A_vs_siScr_dds))
+RH41_siH3F3A_vs_siScr_dds <- estimateSizeFactors(RH41_siH3F3A_vs_siScr_dds)
+sizeFactors(RH41_siH3F3A_vs_siScr_dds)
+
+RH41_siH3F3A_vs_siScr_normalized_counts <- counts(RH41_siH3F3A_vs_siScr_dds, normalized=TRUE)
+data_name <- "RH41_siH3F3A_vs_siScr"
+normalized <- "_normalized_counts.txt"
+write.table(RH41_siH3F3A_vs_siScr_normalized_counts, file = paste(data_name, normalized, sep=""), sep="\t", quote=F, col.names=NA)
+
+### Total number of raw counts per sample
+total_raw_counts <- as.data.frame(colSums(counts(RH41_siH3F3A_vs_siScr_dds)))
+## Total number of normalized counts per sample
+total_normalized_counts <- colSums(counts(RH41_siH3F3A_vs_siScr_dds, normalized=T))
+
+
+
+# Removing siSCR_2 as outlier from PCA
+RH41_siH3F3A_vs_siScr_reduced_metadata <- RH41_siH3F3A_vs_siScr_metadata[-c(2), ] # siSCR_2 is on row 2
+RH41_siH3F3A_vs_siScr_reduced_counts_final <- RH41_siH3F3A_vs_siScr_counts_final[, -c(2)] # siSCR_2 is on column 2
+
+RH41_siH3F3A_vs_siScr_reduced_dds <- DESeqDataSetFromMatrix(countData = round(RH41_siH3F3A_vs_siScr_reduced_counts_final),
+                                                            colData = RH41_siH3F3A_vs_siScr_reduced_metadata,
+                                                            design = ~ sampletype)
+
+RH41_siH3F3A_vs_siScr_reduced_dds <- estimateSizeFactors(RH41_siH3F3A_vs_siScr_reduced_dds)
+sizeFactors(RH41_siH3F3A_vs_siScr_reduced_dds)
+
+RH41_siH3F3A_vs_siScr_reduced_normalized_counts <- counts(RH41_siH3F3A_vs_siScr_reduced_dds, normalized=TRUE)
+```
+
+
+
+# 2. DGE Hierarchical Clustering Heatmap & PCA
+
+Imports
+```{r echo=FALSE}
+library(ggplot2)
+library(pheatmap)
+library(ggrepel)
+library(RColorBrewer)
+```
+
+rlog transformation
+```{r echo=FALSE}
+RH41_siH3F3A_vs_siScr_rld <- rlog(RH41_siH3F3A_vs_siScr_dds, blind=TRUE)
+```
+
+Plot PCA
+```{r echo=FALSE}
+# For all 6 samples
+
+plotPCA(RH41_siH3F3A_vs_siScr_rld, intgroup="sampletype") + 
+  labs(colour="Experimental\nCondition") +
+  geom_text_repel(aes(label = name), size = 5, point.padding = 5) + # geom_text_repel: Repulsive textual annotations.
+  geom_point(size = 3) +
+  coord_fixed(xlim = c(-7, 7), ylim = c(-7, 7), ratio = 1/1) + # Ratio is x / y
+  theme(axis.title.x = element_text(size=16)) +
+  theme(axis.text.x  = element_text(size=10)) +
+  theme(axis.title.y = element_text(size=16)) +
+  theme(axis.text.y  = element_text(size=10)) +
+  theme(legend.title = element_text(size=16)) +
+  theme(legend.text = element_text (size=16))
+
+
+# For 5 samples after removing siSCR_2
+
+RH41_siH3F3A_vs_siScr_reduced_rld <- rlog(RH41_siH3F3A_vs_siScr_reduced_dds, blind=TRUE)
+
+plotPCA(RH41_siH3F3A_vs_siScr_reduced_rld, intgroup="sampletype") + 
+  labs(colour="Experimental\nCondition") +
+  geom_text_repel(aes(label = name), size = 5, point.padding = 5) + # geom_text_repel: Repulsive textual annotations.
+  geom_point(size = 3) +
+  coord_fixed(xlim = c(-7, 7), ylim = c(-7, 7), ratio = 1/1) + # Ratio is x / y
+  theme(axis.title.x = element_text(size=16)) +
+  theme(axis.text.x  = element_text(size=10)) +
+  theme(axis.title.y = element_text(size=16)) +
+  theme(axis.text.y  = element_text(size=10)) +
+  theme(legend.title = element_text(size=16)) +
+  theme(legend.text = element_text (size=16))
+```
+
+Hierarchical Clustering Heat-map from correlation values
+```{r echo=FALSE}
+# Select colour palette
+heat.colors <- brewer.pal(11, "RdYlBu")
+
+# Hierarchical clustering
+RH41_siH3F3A_vs_siScr_rld_matrix <- assay(RH41_siH3F3A_vs_siScr_rld)
+# Compute pairwise correlation values
+RH41_siH3F3A_vs_siScr_correlation <- cor(RH41_siH3F3A_vs_siScr_rld_matrix)
+head(RH41_siH3F3A_vs_siScr_correlation)
+# Plot correlation heat-map
+pheatmap(RH41_siH3F3A_vs_siScr_correlation, color = rev(heat.colors), border_color = NA, fontsize = 12, 
+         fontsize_row = 12, height = 20, main = "RH41_siH3F3A_vs_siSCR sample pairwise correlation")
+
+# Hierarchical clustering
+RH41_siH3F3A_vs_siScr_reduced_rld_matrix <- assay(RH41_siH3F3A_vs_siScr_reduced_rld)
+# Compute pairwise correlation values
+RH41_siH3F3A_vs_siScr_reduced_correlation <- cor(RH41_siH3F3A_vs_siScr_reduced_rld_matrix)
+head(RH41_siH3F3A_vs_siScr_reduced_correlation)
+# Plot correlation heat-map
+pheatmap(RH41_siH3F3A_vs_siScr_reduced_correlation, color = rev(heat.colors), border_color = NA, fontsize = 12, 
+         fontsize_row = 12, height = 20, main = "RH41_siH3F3A_vs_siSCR sample pairwise correlation")
+```
+
+
+
+# 3. Model fitting and hypothesis testing
+
+Imports
+```{r echo=FALSE}
+library(DESeq2)
+library(apeglm)
+library(dplyr)
+library(tidyverse)
+```
+
+Run differential expression testing for `RH41_siH3F3A_vs_siScr_reduced_dds`
+```{r echo=FALSE}
+RH41_siH3F3A_vs_siScr_reduced_dds <- DESeq(RH41_siH3F3A_vs_siScr_reduced_dds)
+```
+
+Plot dispersion estimates
+```{r echo=FALSE}
+plotDispEsts(RH41_siH3F3A_vs_siScr_reduced_dds)
+```
+
+Define contrasts, extract results table, and shrink the log2 fold changes, specify groups for comparison.
+```{r echo=FALSE}
+RH41_siH3F3A_vs_siScr_DE_unshrunken <- results(RH41_siH3F3A_vs_siScr_reduced_dds,
+                                               contrast=c("sampletype", "H3F3A_KD", "Control"),
+                                               independentFiltering = TRUE,
+                                               alpha = 0.05,
+                                               pAdjustMethod = "BH")
+
+resultsNames(RH41_siH3F3A_vs_siScr_reduced_dds)
+
+RH41_siH3F3A_vs_siScr_reduced_DE <- lfcShrink(RH41_siH3F3A_vs_siScr_reduced_dds, coef="sampletype_H3F3A_KD_vs_Control", type="apeglm")
+RH41_siH3F3A_vs_siScr_reduced_DE
+```
+
+log2 fold change (MAP): sampletype H3F3A KD vs Control 
+Wald test p-value: sampletype H3F3A KD vs Control 
+DataFrame with 43714 rows and 5 columns
+            baseMean log2FoldChange     lfcSE    pvalue      padj
+           <numeric>      <numeric> <numeric> <numeric> <numeric>
+A1BG      141.254928    0.001110005 0.0813690  0.972307  0.990745
+A1BG-AS1   33.533868    0.002361406 0.0863201  0.895032        NA
+A1CF        3.795556    0.002773807 0.0879388  0.669415        NA
+A2M         1.806435    0.002400243 0.0880782  0.534158        NA
+A2M-AS1     0.198279    0.000680761 0.0881087  0.837475        NA
+...              ...            ...       ...       ...       ...
+ZYG11B   1938.632424    0.093517648 0.0871426 0.0868744  0.406799
+ZYX         0.392878   -0.000356957 0.0880883 0.8918440        NA
+ZYX_1       0.000000             NA        NA        NA        NA
+ZZEF1    1238.573236   -0.042637630 0.0716709 0.3596013  0.722659
+ZZZ3     1402.838071    0.040791988 0.0701027 0.3787747  0.735336
+
+MA plot
+Specifically call the DESeq2 version of plotMA, if not it would call the plotMA from limma.
+https://rdrr.io/bioc/limma/man/plotma.html
+```{r echo=FALSE}
+DESeq2::plotMA(RH41_siH3F3A_vs_siScr_DE_unshrunken, ylim=c(-4, 4))
+DESeq2::plotMA(RH41_siH3F3A_vs_siScr_DE, ylim=c(-4, 4))
+```
+
+Inspect DE results
+```{r echo=FALSE}
+mcols(RH41_siH3F3A_vs_siScr_DE, use.names=T)
+RH41_siH3F3A_vs_siScr_DE %>% data.frame() %>% View()
+```
+
+Plot counts of a specific gene `MCAM`
+```{r echo=FALSE}
+plotCounts(RH41_siH3F3A_vs_siScr_reduced_dds, gene="MCAM", intgroup="sampletype")
+```
+
+Summarize results and preview
+```{r echo=FALSE}
+summary(RH41_siH3F3A_vs_siScr_reduced_dds)
+RH41_siH3F3A_vs_siScr_reduced_DE_a05 <- results(RH41_siH3F3A_vs_siScr_reduced_dds, alpha=0.05)
+summary(RH41_siH3F3A_vs_siScr_reduced_DE_a05)
+```
+out of 28308 with nonzero total read count
+adjusted p-value < 0.05
+LFC > 0 (up)       : 54, 0.19%
+LFC < 0 (down)     : 473, 1.7%
+outliers [1]       : 0, 0%
+low counts [2]     : 17592, 62%
+(mean count < 129)
+[1] see 'cooksCutoff' argument of ?results
+[2] see 'independentFiltering' argument of ?results
+
+Set thresholds for Fold change and adjusted p-value for significant differentially expressed genes.
+```{r echo=FALSE}
+FC1.2 <- 0.263 # The equivalent log2FC for both
+FC1.5 <- 0.585
+FC2.0 <- 1
+
+padj_cutoff <- 0.05
+
+l2fc_cutoff <- FC1.2
+
+RH41_siH3F3A_vs_siScr_reduced_DE_table <- RH41_siH3F3A_vs_siScr_reduced_DE %>%
+  data.frame() %>%
+  rownames_to_column(var="HGNC") %>%
+  as_tibble()
+
+RH41_siH3F3A_vs_siScr_reduced_sig_DEGS <- RH41_siH3F3A_vs_siScr_reduced_DE_table %>%
+  filter(padj < padj_cutoff & abs(log2FoldChange) > l2fc_cutoff)
+
+RH41_siH3F3A_vs_siScr_reduced_sig_DEGS
+```
+# A tibble: 373 × 6
+   HGNC    baseMean log2FoldChange  lfcSE   pvalue        padj
+   <chr>      <dbl>          <dbl>  <dbl>    <dbl>       <dbl>
+ 1 ABAT       7188.          0.442 0.0756 2.95e-10 0.000000290
+ 2 ABHD15      838.         -0.314 0.118  4.86e- 4 0.0177     
+ 3 ABHD17A    3861.         -0.380 0.112  4.30e- 5 0.00299    
+ 4 ABI3       1348.         -0.305 0.101  1.68e- 4 0.00847    
+ 5 ADAM12      649.         -0.368 0.120  1.29e- 4 0.00712    
+ 6 ADAMTS2     109.         -0.639 0.264  5.62e- 4 0.0192     
+ 7 ADAMTS7     307.         -0.465 0.161  1.91e- 4 0.00902    
+ 8 ADGRA1     1359.         -0.301 0.105  2.86e- 4 0.0122     
+ 9 ADGRA2     1780.         -0.305 0.117  6.10e- 4 0.0204     
+10 ADRM1     12486.         -0.279 0.0866 1.07e- 4 0.00622    
+# … with 363 more rows
+# ℹ Use `print(n = ...)` to see more rows
+
+
+
+# 4 - Visualization of DEGs
+
+Imports
+```{r echo=FALSE}
+library(ggplot2)
+library(ggrepel)
+library(ComplexHeatmap)
+library(circlize)
+library(RColorBrewer)
+library(tidyverse)
+```
+
+
+
+DEG Bar graph
+```{r echo=FALSE}
+
+DEGs_up <- RH41_siH3F3A_vs_siScr_reduced_sig_DEGS %>% filter(log2FoldChange > 0)
+DEGs_down <- RH41_siH3F3A_vs_siScr_reduced_sig_DEGS %>% filter(log2FoldChange < 0)
+
+number_genes_up <- length(DEGs_up$HGNC)
+number_genes_down <- length(DEGs_down$HGNC)
+
+DEG_df<- data.frame(Expression = c("Up", "Down"), Genes = c(number_genes_up, number_genes_down))
+
+DEG_barplot <- ggplot(DEG_df, aes(x=Expression, y=Genes, fill=Expression)) +
+  geom_bar(stat="identity") +
+  geom_text(aes(label=Genes), nudge_y = 20, size = 6) +
+  theme_minimal() +
+  theme(axis.title.x = element_text(size=16)) +
+  theme(axis.text.x  = element_text(size=16)) +
+  theme(axis.title.y = element_text(size=16)) +
+  theme(axis.text.y  = element_text(size=16)) +
+  theme(legend.title = element_text(size=16)) +
+  theme(legend.text = element_text (size=16))
+
+DEG_barplot
+```
+
+DEG Volcano plot
+```{r echo=FALSE}
+options(ggrepel.max.overlaps = Inf)
+
+# Extract the relevant columns from the data-frame output of DESeq2 results
+RNA_seq_DE_table_rn <- RH41_siH3F3A_vs_siScr_reduced_DE_table %>% column_to_rownames(var = "HGNC")
+genes <- rownames(RNA_seq_DE_table_rn)
+volcano_plot_data <- data.frame(genes,
+                                log2FC = RNA_seq_DE_table_rn[,2] ,
+                                logqval = -log10(RNA_seq_DE_table_rn[,5]))
+
+# Add a column of differential expression indicators
+volcano_plot_data$diffexpressed <- "Not sig"
+
+# The equivalent log2FC for fold change values
+FC1.2 <- 0.263 
+FC1.5 <- 0.585
+FC2.0 <- 1
+
+# If log2Foldchange > 1 and padj value < 0.05, set as "UP" 
+volcano_plot_data$diffexpressed[volcano_plot_data$log2FC > FC1.2 & volcano_plot_data$logqval > 1.301] <- "UP"
+
+# If log2Foldchange < -1 and padj value < 0.05, set as "DOWN"
+volcano_plot_data$diffexpressed[volcano_plot_data$log2FC < -FC1.2 & volcano_plot_data$logqval > 1.301] <- "DOWN"
+
+# First plot base on differential expression indicators
+volcano_plot <- ggplot(volcano_plot_data, aes(x=log2FC, y=logqval, col=diffexpressed)) +
+  geom_point(size = 2) +
+  xlim(-1.5, 1.5) +
+  ylim(-1, 12)
+
+# Second plot to add black lines for FC and q-value cut-offs
+volcano_plot_2 <- volcano_plot +
+  geom_vline(xintercept=c(-FC1.2, FC1.2), col="black") +
+  geom_hline(yintercept=1.301, col="black")
+
+# Labeling specific genes
+# Use min.segment.length = 0 to draw all line segments, no matter how short they are.
+volcano_plot_data$genelabels <- ""
+#volcano_plot_data$genelabels <- ifelse(volcano_plot_data$genes == "MCAM", TRUE, FALSE)
+volcano_plot_3 <- volcano_plot_2 + geom_text_repel(min.segment.length = 0,
+                                                   label = ifelse(volcano_plot_data$genelabels,
+                                                                  volcano_plot_data$genes, ""),
+                                                   colour = 'black')
+# Create custom colour panel
+vp_colors <- c("blue", "red", "grey")
+names(vp_colors) <- c("DOWN", "UP", "Not sig")
+
+# Add custom colour panel and axis limits
+# vp2 is without individual gene geom_text_repel label and vp3 is with individual gene geom_text_repel label
+# Use min.segment.length = 0 to draw all line segments, no matter how short they are
+volcano_plot_4 <- volcano_plot_3 + scale_colour_manual(values = vp_colors)
+
+# Add appropriate title and axis labels
+volcano_plot_5 <- volcano_plot_4 + 
+  ggtitle("H3F3A KD DEGs") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(y="-Log10(q-value)", x = "Log2(Fold-change)") +
+  labs(col="Differential\nexpression\nstatus")
+
+volcano_plot_6 <- volcano_plot_5 + theme(plot.title = element_text(size=20)) +
+  theme(axis.title.x = element_text(size=16)) +
+  theme(axis.text.x  = element_text(size=10)) +
+  theme(axis.title.y = element_text(size=16)) +
+  theme(axis.text.y  = element_text(size=10)) +
+  theme(legend.title = element_text(size=16)) +
+  theme(legend.text = element_text (size=16))
+
+volcano_plot_6
+```
+
+Heatmap of DEGs
+```{r echo=FALSE}
+# Create tibbles including row names
+# Normalized_counts are from first Rmd.
+RNA_seq_normalized_counts_df <- RH41_siH3F3A_vs_siScr_reduced_normalized_counts %>% 
+  data.frame() %>%
+  rownames_to_column(var="HGNC") %>% 
+  as_tibble()
+
+# Extract normalized expression for significant genes from the, and set the gene column (1) to row names
+RNA_seq_normalized_DEGs_df <- RNA_seq_normalized_counts_df[,c(1:6)] %>% 
+  filter(HGNC %in% RH41_siH3F3A_vs_siScr_reduced_sig_DEGS$HGNC) %>% 
+  data.frame() %>%
+  column_to_rownames(var = "HGNC")
+
+# Run ComplexHeatmap
+RNA_seq_normalized_DEGs_matrix <- as.matrix(RNA_seq_normalized_DEGs_df[, grep("_", colnames(RNA_seq_normalized_DEGs_df))])
+DEG_base_mean = rowMeans(RNA_seq_normalized_DEGs_matrix)
+DEG_matrix_scaled = t(apply(RNA_seq_normalized_DEGs_matrix, 1, scale))
+DEG_sample_names <- colnames(RNA_seq_normalized_DEGs_matrix)
+
+# Match the sample names with their corresponding sample type from the metadata
+DEG_heatmap_annotation <- HeatmapAnnotation(Sample = DEG_sample_names,
+                                            Condition = RH41_siH3F3A_vs_siScr_reduced_metadata$sampletype[
+                                              match(DEG_sample_names, rownames(RH41_siH3F3A_vs_siScr_reduced_metadata))
+                                              ],
+                                            annotation_name_side = "left")
+
+set.seed(123)
+RNA_seq_DEG_heatmap_list <- Heatmap(DEG_matrix_scaled,
+                                    column_title = "H3F3A KD DEGs",
+                                    name = "Relative \nexpression",
+                                    col = colorRamp2(c(-2, 0, 2), c("green", "black", "red")),
+                                    top_annotation = DEG_heatmap_annotation,
+                                    show_row_names = FALSE,
+                                    use_raster = TRUE, raster_quality = 5) +
+ Heatmap(DEG_base_mean, name = "Gene counts \nbase mean", show_row_names = FALSE, show_column_names = FALSE,
+         use_raster = TRUE, raster_quality = 5)
+
+draw(RNA_seq_DEG_heatmap_list)
+```
+
+
+
+```{r echo=FALSE}
+
+```
+
+
+
+```{r echo=FALSE}
+
+```
+
+
+
+```{r echo=FALSE}
+
+```
+
+
+
+```{r echo=FALSE}
+
+```
+
+
+
+```{r echo=FALSE}
+
+```
+
+
+
+```{r echo=FALSE}
+
+```
+
+
+
+```{r echo=FALSE}
+
+```
+
+
+
+```{r echo=FALSE}
+
+```
