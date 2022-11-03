@@ -1,4 +1,15 @@
 Paths:
+  RH41_siH3F3A_vs_siScr_meta: "./data/RNA-seq_counts/RH41_siH3F3A_vs_siScr.meta"
+  RH41_siH3F3A_vs_siScr_data: "./data/RNA-seq_counts"
   Narrow_peaks_bed: "./data/ChIP-seq/H3_3_peaks.narrowPeak"
   BETA_H3F3A_uptarget_associate_peaks: "./data/ChIP-seq/H3F3A_uptarget_associate_peaks.bed"
   RNAseq_DEGs: "./data/RNA-seq_outputs/significant_genes_H3F3A_KD_vs_Control.csv"
+
+Samples:
+  RH41_siH3F3A_vs_siScr:
+    siSCR_1: "RH41_siSCR_1"
+    siSCR_2: "RH41_siSCR_2"
+    siSCR_3: "RH41_siSCR_3"
+    siH3F3A_1: "RH41_siH3F3A_1"
+    siH3F3A_2: "RH41_siH3F3A_2"
+    siH3F3A_3: "RH41_siH3F3A_3"
