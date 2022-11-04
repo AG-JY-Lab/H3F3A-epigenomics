@@ -323,8 +323,8 @@ MA plot
 Specifically call the DESeq2 version of plotMA, if not it would call the plotMA from limma.
 https://rdrr.io/bioc/limma/man/plotma.html
 ```{r echo=FALSE}
-DESeq2::plotMA(RH41_siH3F3A_vs_siScr_DE_unshrunken, ylim=c(-4, 4))
-DESeq2::plotMA(RH41_siH3F3A_vs_siScr_DE, ylim=c(-4, 4))
+DESeq2::plotMA(RH41_siH3F3A_vs_siScr_DE_unshrunken, ylim=c(-2.5, 2.5))
+DESeq2::plotMA(RH41_siH3F3A_vs_siScr_DE, ylim=c(-2.5, 2.5))
 ```
 
 Inspect DE results
