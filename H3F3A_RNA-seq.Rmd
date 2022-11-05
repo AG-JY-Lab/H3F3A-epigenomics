@@ -290,11 +290,11 @@ plotDispEsts(RH41_siH3F3A_vs_siScr_reduced_dds)
 
 Define contrasts, extract results table, and shrink the log2 fold changes, specify groups for comparison.
 ```{r echo=FALSE}
-RH41_siH3F3A_vs_siScr_DE_unshrunken <- results(RH41_siH3F3A_vs_siScr_reduced_dds,
-                                               contrast=c("sampletype", "H3F3A_KD", "Control"),
-                                               independentFiltering = TRUE,
-                                               alpha = 0.05,
-                                               pAdjustMethod = "BH")
+RH41_siH3F3A_vs_siScr_reduced_DE_unshrunken <- results(RH41_siH3F3A_vs_siScr_reduced_dds,
+                                                       contrast=c("sampletype", "H3F3A_KD", "Control"),
+                                                       independentFiltering = TRUE,
+                                                       alpha = 0.05,
+                                                       pAdjustMethod = "BH")
 
 resultsNames(RH41_siH3F3A_vs_siScr_reduced_dds)
 
@@ -323,14 +323,14 @@ MA plot
 Specifically call the DESeq2 version of plotMA, if not it would call the plotMA from limma.
 https://rdrr.io/bioc/limma/man/plotma.html
 ```{r echo=FALSE}
-DESeq2::plotMA(RH41_siH3F3A_vs_siScr_DE_unshrunken, ylim=c(-2.5, 2.5))
-DESeq2::plotMA(RH41_siH3F3A_vs_siScr_DE, ylim=c(-2.5, 2.5))
+DESeq2::plotMA(RH41_siH3F3A_vs_siScr_reduced_DE_unshrunken, ylim=c(-2.5, 2.5))
+DESeq2::plotMA(RH41_siH3F3A_vs_siScr_reduced_DE, ylim=c(-2.5, 2.5))
 ```
 
 Inspect DE results
 ```{r echo=FALSE}
-mcols(RH41_siH3F3A_vs_siScr_DE, use.names=T)
-RH41_siH3F3A_vs_siScr_DE %>% data.frame() %>% View()
+mcols(RH41_siH3F3A_vs_siScr_reduced_DE, use.names=T)
+RH41_siH3F3A_vs_siScr_reduced_DE %>% data.frame() %>% View()
 ```
 
 Plot counts of a specific gene `MCAM`
@@ -546,48 +546,223 @@ draw(RNA_seq_DEG_heatmap_list)
 
 
 
-```{r echo=FALSE}
+5. Enrichment analysis of significant DEGs
 
+Imports
+```{r echo=FALSE}
+library(clusterProfiler)
+library(DOSE)
+library(enrichplot)
+library(ggplot2)
+library(tidyverse)
+library(org.Hs.eg.db)
+library(msigdbr)
 ```
 
-
-
+Selecting Log2FoldChange data and annotate genes
 ```{r echo=FALSE}
+RH41_siH3F3A_vs_siScr_reduced_l2fc_data <- RH41_siH3F3A_vs_siScr_reduced_DE_table
 
+annots <- AnnotationDbi::select(org.Hs.eg.db,
+                                keys = RH41_siH3F3A_vs_siScr_reduced_l2fc_data$HGNC,
+                                columns = c ("ENTREZID", "ENSEMBL", "GENENAME"), keytype = "SYMBOL")
+
+RH41_siH3F3A_vs_siScr_reduced_l2fc_merge <- merge(RH41_siH3F3A_vs_siScr_reduced_l2fc_data, annots, by.x=1, by.y="SYMBOL")
+RH41_siH3F3A_vs_siScr_reduced_l2fc_complete <- RH41_siH3F3A_vs_siScr_reduced_l2fc_merge[complete.cases(RH41_siH3F3A_vs_siScr_reduced_l2fc_merge), ] # Gene names & descriptions intact
+RH41_siH3F3A_vs_siScr_reduced_l2fc_consolidated <- {RH41_siH3F3A_vs_siScr_reduced_l2fc_complete %>% group_by(ENTREZID) %>% summarise_at(c("baseMean", "log2FoldChange", "lfcSE", "pvalue", "padj"), mean)}
 ```
 
-
-
+Convert gene tibble format into dataframe and extract relevant columns
 ```{r echo=FALSE}
+# Tibble format not compatible for list extraction
+# Must convert FC data with Entrez ID naming into a dataframe with as.data.frame function
+RH41_siH3F3A_vs_siScr_reduced_l2fc_consolidated <- as.data.frame(RH41_siH3F3A_vs_siScr_reduced_l2fc_consolidated)
 
+# Third column is where Log2FoldChange values are
+RH41_siH3F3A_vs_siScr_reduced_geneList <- RH41_siH3F3A_vs_siScr_reduced_l2fc_consolidated[,3]
+
+# First column contain Entrez IDs of genes, which will be used as names
+names(RH41_siH3F3A_vs_siScr_reduced_geneList) <- as.character(RH41_siH3F3A_vs_siScr_reduced_l2fc_consolidated[,1])
+
+# Sort genelist
+RH41_siH3F3A_vs_siScr_reduced_geneList <- sort(RH41_siH3F3A_vs_siScr_reduced_geneList, decreasing = TRUE)
+
+# DEGS over an absolute FC of 1.2
+# A FC or 1.5 is a L2FC of 0.58496250072
+DEGs <- names(RH41_siH3F3A_vs_siScr_reduced_geneList)[abs(RH41_siH3F3A_vs_siScr_reduced_geneList) > 0.263034]
 ```
 
-
-
+Gene Ontology: BP
 ```{r echo=FALSE}
+egoBP <- enrichGO(gene = DEGs,
+                  universe = names(RH41_siH3F3A_vs_siScr_reduced_geneList),
+                  OrgDb = org.Hs.eg.db,
+                  ont = "BP",
+                  pAdjustMethod = "BH",
+                  pvalueCutoff = 0.05,
+                  qvalueCutoff = 0.05,
+                  readable = TRUE)
 
+plot_GOBP_bar_top_10 <- barplot(egoBP, showCategory=10, font.size = 14) + xlab("Number of genes") + ggtitle("Barplot for EnrichGO:BP")
+plot_GOBP_bar_top_10
+
+plot_GOBP_bar_top_20 <- barplot(egoBP, showCategory=20, font.size = 10) + xlab("Number of genes") + ggtitle("Barplot for EnrichGO:BP")
+plot_GOBP_bar_top_20 + scale_y_discrete(labels=function(x) str_wrap(x, width=40))
+
+plot_GOBP_dot_top_10 <- dotplot(egoBP, showCategory=10, font.size = 14) + ggtitle("Dotplot for EnrichGO:BP")
+plot_GOBP_dot_top_10
+
+plot_GOBP_dot_top_20 <- dotplot(egoBP, showCategory=20, font.size = 10) + ggtitle("Dotplot for EnrichGO:BP")
+plot_GOBP_dot_top_20 + scale_y_discrete(labels=function(x) str_wrap(x, width=40))
 ```
 
-
-
+Gene Ontology: MF
 ```{r echo=FALSE}
+egoMF <- enrichGO(gene = DEGs,
+                  universe = names(RH41_siH3F3A_vs_siScr_reduced_geneList),
+                  OrgDb = org.Hs.eg.db,
+                  ont = "MF",
+                  pAdjustMethod = "BH",
+                  pvalueCutoff = 0.05,
+                  qvalueCutoff = 0.05,
+                  readable = TRUE)
 
+plot_GOMF_bar_top_10 <- barplot(egoMF, showCategory=10, font.size = 14) + xlab("Number of genes") + ggtitle("Barplot for EnrichGO:MF")
+plot_GOMF_bar_top_10
+
+plot_GOMF_bar_top_20 <- barplot(egoMF, showCategory=20, font.size = 10) + xlab("Number of genes") + ggtitle("Barplot for EnrichGO:MF")
+plot_GOMF_bar_top_20 + scale_y_discrete(labels=function(x) str_wrap(x, width=40))
+
+plot_GOMF_dot_top_10 <- dotplot(egoMF, showCategory=10, font.size = 14) + ggtitle("Dotplot for EnrichGO:MF")
+plot_GOMF_dot_top_10
+
+plot_GOMF_dot_top_20 <- dotplot(egoMF, showCategory=20, font.size = 10) + ggtitle("Dotplot for EnrichGO:MF")
+plot_GOMF_dot_top_20 + scale_y_discrete(labels=function(x) str_wrap(x, width=40))
 ```
 
-
-
+Gene Ontology: CC
 ```{r echo=FALSE}
+egoCC <- enrichGO(gene = DEGs,
+                  universe = names(RH41_siH3F3A_vs_siScr_reduced_geneList),
+                  OrgDb = org.Hs.eg.db,
+                  ont = "CC",
+                  pAdjustMethod = "BH",
+                  pvalueCutoff = 0.05,
+                  qvalueCutoff = 0.05,
+                  readable = TRUE)
 
+plot_GOCC_bar_top_10 <- barplot(egoCC, showCategory=10, font.size = 14) + xlab("Number of genes") + ggtitle("Barplot for EnrichGO:CC")
+plot_GOCC_bar_top_10
+
+plot_GOCC_bar_top_20 <- barplot(egoCC, showCategory=20, font.size = 10) + xlab("Number of genes") + ggtitle("Barplot for EnrichGO:CC")
+plot_GOCC_bar_top_20 + scale_y_discrete(labels=function(x) str_wrap(x, width=40))
+
+plot_GOCC_dot_top_10 <- dotplot(egoCC, showCategory=10, font.size = 14) + ggtitle("Dotplot for EnrichGO:CC")
+plot_GOCC_dot_top_10
+
+plot_GOCC_dot_top_20 <- dotplot(egoCC, showCategory=20, font.size = 10) + ggtitle("Dotplot for EnrichGO:CC")
+plot_GOCC_dot_top_20 + scale_y_discrete(labels=function(x) str_wrap(x, width=40))
 ```
 
-
-
+Disease gene network and KEGG pathways
 ```{r echo=FALSE}
+DGN <- enrichDGN(DEGs) # Function for enrichment analysis of disease-gene associations
+plot_DGN_dot <- dotplot(DGN, showCategory=10, font.size = 14) + ggtitle("Dotplot for EnrichDGN")
+plot_DGN_dot
 
+KEGG <- enrichKEGG(DEGs)
+plot_KEGG_dot <- dotplot(KEGG, showCategory=10, font.size = 14) + ggtitle("Dotplot for EnrichKEGG")
+plot_KEGG_dot
 ```
 
-
-
+Network of Cancer Genes
 ```{r echo=FALSE}
+# Enrichment analysis based on the Network of Cancer Genes database
+NCG <- enrichNCG(gene = DEGs, readable = TRUE)
 
+plot_NCG_dot <- dotplot(NCG, showCategory=10, font.size = 14) + ggtitle("Dotplot for EnrichNCG")
+plot_NCG_dot
 ```
+
+Gene Set Enrichment Analysis (GSEA)
+```{r}
+GSEA_GOBP <- gseGO(geneList = RH41_siH3F3A_vs_siScr_reduced_geneList,
+                   OrgDb = org.Hs.eg.db,
+                   ont = "BP",
+                   minGSSize = 100,
+                   maxGSSize = 500,
+                   pvalueCutoff = 0.05,
+                   verbose = TRUE,
+                   by = "fgsea")
+
+GSEA_GOBP_dotplot <- dotplot(GSEA_GOBP, showCategory=20, font.size = 10) + ggtitle("Dotplot for fGSEA")
+GSEA_GOBP_dotplot + scale_y_discrete(labels=function(x) str_wrap(x, width=40))
+
+### Ridgeline plot
+# ridgeline plot for expression distribution of GSEA result
+plot_ridgeplot <- ridgeplot(GSEA_GOBP, showCategory = 20, fill = "p.adjust", core_enrichment = TRUE)
+plot_ridgeplot + scale_y_discrete(labels=function(x) str_wrap(x, width=40))
+
+# Tree plot for GSEA
+GSEA_GOBP_paired <- pairwise_termsim(GSEA_GOBP)
+plot_tree_plot <- treeplot(GSEA_GOBP_paired)
+plot_tree_plot
+```
+
+Enrichment map
+```{r}
+egoBP_pair <- pairwise_termsim(egoBP)
+# cex_category = number indicating the amount by which plotting category nodes should be scaled relative to the default
+# cex_label_category	= scale of category node label size
+plot_egoBP_net1 <- emapplot(egoBP_pair, cex_category=1, cex_label_category=1, layout="kk")
+plot_egoBP_net1 + theme(legend.title = element_text(size=16), #change legend title font size
+                        legend.text = element_text(size=14)) #change legend text font size
+
+plot_egoBP_net2 <- emapplot(egoBP_pair, cex_category=1, cex_label_category=1, layout="nicely")
+plot_egoBP_net2 + theme(legend.title = element_text(size=16), #change legend title font size
+                        legend.text = element_text(size=14)) #change legend text font size
+```
+
+Gene concept network
+```{r}
+egoBP_read <- setReadable(egoBP, 'org.Hs.eg.db', 'ENTREZID')
+
+selected_pathways <- c("blood vessel development",
+                       "angiogenesis",
+                       "vasculature development",
+                       "blood vessel morphogenesis",
+                       "wound healing")
+
+
+#Select terms of interest from dataframe and join into list with c(), plot gene concept network with only selected terms
+plot_gene_concept_network_1 <- cnetplot(egoBP_read,
+                                        layout = "kk",
+                                        categorySize="geneNum",
+                                        showCategory = selected_pathways,
+                                        foldChange=RH41_siH3F3A_vs_siScr_reduced_geneList) + theme(legend.title = element_text(size=16),
+                                                                                                   legend.text = element_text(size=14))
+plot_gene_concept_network_1
+
+
+# categorySize can be scaled by 'pvalue' or 'geneNum'
+plot_gene_concept_network_2 <- cnetplot(egoBP_read,
+                                        layout = "kk",
+                                        categorySize="pvalue",
+                                        showCategory = selected_pathways,
+                                        foldChange=RH41_siH3F3A_vs_siScr_reduced_geneList) + theme(legend.title = element_text(size=16),
+                                                                                                   legend.text = element_text(size=14))
+#Scale plot size by p-value
+plot_gene_concept_network_2 + guides(color=guide_colorbar(title="Log2 fold-change"), size=guide_legend(title="Number of genes"))
+
+
+plot_gene_concept_network_3 <- cnetplot(egoBP_read,
+                                        categorySize="geneNum",
+                                        showCategory = selected_pathways,
+                                        foldChange=RH41_siH3F3A_vs_siScr_reduced_geneList,
+                                        circular = TRUE,
+                                        colorEdge = TRUE)  + theme(legend.title = element_text(size=16),
+                                                                   legend.text = element_text(size=14))
+# For circular plot
+plot_gene_concept_network_3 + guides(color=guide_colorbar(title="Log2 fold-change"), size=guide_legend(title="Number of genes"))
+```
+
