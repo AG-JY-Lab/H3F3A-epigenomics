@@ -30,14 +30,29 @@ Project on investigating the role of H3F3A in Alveolar Rhabdomyosarcoma.
 #### e. Visualization of DEGs
 - Differentially expressed genes bar graph.
 ![](figures/RNA_seq_generic/DEG_barplot_600_400.svg)
-- Differentially expressed genes Volcano plot
+- Differentially expressed genes Volcano plot.
 ![](figures/RNA_seq_generic/Volcano_plot_800_600.svg)
-- Heatmap of Differentially expressed genes
+- Heatmap of Differentially expressed genes.
 ![](figures/RNA_seq_generic/DEG_Heatmap_800_600.svg)
 #### f. Enrichment analysis of significant DEGs
-- TODO 1
-- TODO 2
-- TODO 3
+- Mapping HGNC gene symbols to Entrez IDs, filtering genes based on Log2 Fold-change, and sorting genes in descending order.
+- `enrichGO` Biological Processes BP (top 10).
+![](figures/RNA_seq_generic/.svg)
+
+- `enrichGO` Molecular Function MF (top 10).
+![](figures/RNA_seq_generic/.svg)
+
+- `enrichGO` Cellular Component CC (top 10).
+![](figures/RNA_seq_generic/.svg)
+
+- `gseGO` Gene Set Enrichment Analysis (GSEA) for Biological Processes BP (top 10).
+![](figures/RNA_seq_generic/.svg)
+
+- `emapplot` Enrichment map for Biological Processes BP.
+![](figures/RNA_seq_generic/.svg)
+
+- `cnetplot` Gene concept network of selected Biological Processes BP of interest.
+![](figures/RNA_seq_generic/.svg)
 
 ### 2. H3F3A_ChIP-seq
 - This R-markdown contains the analysis code for functional enrichment of the genes found by ChIP-seq of H3F3A with sequencing reads aligned with Bowtie2 and peak calling with Macs2. The peaks used as inputs are the from the `.narrowPeak` file from Macs2.
