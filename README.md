@@ -37,22 +37,22 @@ Project on investigating the role of H3F3A in Alveolar Rhabdomyosarcoma.
 #### f. Enrichment analysis of significant DEGs
 - Mapping HGNC gene symbols to Entrez IDs, filtering genes based on Log2 Fold-change, and sorting genes in descending order.
 - `enrichGO` Biological Processes BP (top 10).
-![](figures/RNA_seq_generic/.svg)
+![](figures/RNA_seq_genes_enrichment/README_PNGs/enrichGO_BP.png)
 
 - `enrichGO` Molecular Function MF (top 10).
-![](figures/RNA_seq_generic/.svg)
+![](figures/RNA_seq_genes_enrichment/README_PNGs/enrichGO_MF.png)
 
 - `enrichGO` Cellular Component CC (top 10).
-![](figures/RNA_seq_generic/.svg)
+![](figures/RNA_seq_genes_enrichment/README_PNGs/enrichGO_CC.png)
 
 - `gseGO` Gene Set Enrichment Analysis (GSEA) for Biological Processes BP (top 10).
-![](figures/RNA_seq_generic/.svg)
+![](figures/RNA_seq_genes_enrichment/README_PNGs/GSEA_BP.png)
 
 - `emapplot` Enrichment map for Biological Processes BP.
-![](figures/RNA_seq_generic/.svg)
+![](figures/RNA_seq_genes_enrichment/README_PNGs/enrichment_map_GO_BP.png)
 
 - `cnetplot` Gene concept network of selected Biological Processes BP of interest.
-![](figures/RNA_seq_generic/.svg)
+![](figures/RNA_seq_genes_enrichment/README_PNGs/gene_concept_network_GO_BP.png)
 
 ### 2. H3F3A_ChIP-seq
 - This R-markdown contains the analysis code for functional enrichment of the genes found by ChIP-seq of H3F3A with sequencing reads aligned with Bowtie2 and peak calling with Macs2. The peaks used as inputs are the from the `.narrowPeak` file from Macs2.
