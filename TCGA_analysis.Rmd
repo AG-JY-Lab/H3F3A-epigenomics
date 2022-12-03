@@ -1,0 +1,63 @@
+---
+title: "H3F3A ChIP-seq analysis"
+author: "Joshua Soon"
+date: '2022-12-02'
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Load the libraries specific to this component.
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(TCGAbiolinks)
+library(SummarizedExperiment)
+
+library(dplyr)
+library(ggplot2)
+
+library(data.table)
+```
+
+1. Query dataset from National Cancer Institute (NCI) Genomic Data Commons (GDC)
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+query <- GDCquery(
+    project = "TCGA-SARC",
+    data.category = "Gene expression",
+    data.type = "Gene expression quantification",
+    file.type  = "normalized_results",
+    experimental.strategy = "RNA-Seq",
+    legacy = TRUE
+)
+```
+
+2. Download the normalized count data.
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+GDCdownload(
+    query = query,
+    method = "api",
+    directory = "./TCGA_data",
+    files.per.chunk = 10
+)
+```
+
+3. Prepare the data for analysis.
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+data <- GDCprepare(query = query, directory = "./TCGA_data")
+```
+
+4. Convert the count data into a dataframe.
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+gene_expression_data <- data.table(assay(data))
+```
+
+5. Add gene symbols as rownames.
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+HGNC_symbols <- data@rowRanges@elementMetadata$gene_id
+named_gene_extression_data <- cbind(HGNC_symbols, gene_expression_data)
+```
+
+6. Export to CSV.
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+write.csv(named_gene_extression_data, "TCGA-SARC_rna_seq_normalized_counts.csv", row.names=FALSE)
+```
+

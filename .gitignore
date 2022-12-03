@@ -4,3 +4,5 @@
 .Rprofile
 .Ruserdata
 /renv
+TCGA_data
+MANIFEST.txt
