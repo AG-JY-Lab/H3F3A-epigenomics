@@ -45,19 +45,15 @@ GDCdownload(
 data <- GDCprepare(query = query, directory = "./TCGA_data")
 ```
 
+
 4. Convert the count data into a dataframe.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
-gene_expression_data <- data.table(assay(data))
+gene_expression_data <- as.data.frame(assay(data))
 ```
 
-5. Add gene symbols as rownames.
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-HGNC_symbols <- data@rowRanges@elementMetadata$gene_id
-named_gene_extression_data <- cbind(HGNC_symbols, gene_expression_data)
-```
 
-6. Export to CSV.
+5. Export to CSV.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
-write.csv(named_gene_extression_data, "TCGA-SARC_rna_seq_normalized_counts.csv", row.names=FALSE)
+write.csv(gene_expression_data, "TCGA-SARC_rna_seq_normalized_counts.csv", row.names=TRUE)
 ```
 
