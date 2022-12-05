@@ -14,6 +14,8 @@ library(SummarizedExperiment)
 
 library(dplyr)
 library(ggplot2)
+library(tidyverse)
+library(ggpubr)
 
 library(data.table)
 ```
@@ -22,15 +24,13 @@ library(data.table)
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 query <- GDCquery(
     project = "TCGA-SARC",
-    data.category = "Gene expression",
-    data.type = "Gene expression quantification",
-    file.type  = "normalized_results",
-    experimental.strategy = "RNA-Seq",
-    legacy = TRUE
+    data.category = "Transcriptome Profiling",
+    data.type = "Gene Expression Quantification",
+    workflow.type = "STAR - Counts"
 )
 ```
 
-2. Download the normalized count data.
+2. Download the count data.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 GDCdownload(
     query = query,
@@ -46,14 +46,80 @@ data <- GDCprepare(query = query, directory = "./TCGA_data")
 ```
 
 
-4. Convert the count data into a dataframe.
+4. Convert the count data into a dataframe. Row names are ensembl IDs.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
-gene_expression_data <- as.data.frame(assay(data))
+gene_expression_data <- as.data.frame(assay(data, "tpm_unstrand"))
 ```
 
 
-5. Export to CSV.
+5. Add gene symbols as a column.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
-write.csv(gene_expression_data, "TCGA-SARC_rna_seq_normalized_counts.csv", row.names=TRUE)
+HGNC_symbols <- data@rowRanges@elementMetadata$gene_name
+named_gene_expression_data <- cbind(HGNC_symbols, gene_expression_data)
 ```
 
+
+6. Export to CSV.
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+write.csv(named_gene_expression_data, "TCGA-SARC_rna_seq_TPM_counts.csv", row.names=TRUE)
+```
+
+
+
+7. Subset genes of interest and convert to a numeric dataframe with HGNC symbols as rownames.
+```{r}
+MCAM_H3F3A_EHMT2_subset <- subset(named_gene_expression_data, HGNC_symbols %in% c("MCAM", "H3-3A", "EHMT2"))
+
+MCAM_H3F3A_EHMT2_subset <- remove_rownames(MCAM_H3F3A_EHMT2_subset) %>% column_to_rownames(var = "HGNC_symbols")
+
+MCAM_H3F3A_EHMT2_subset_transpose <- as.data.frame(t(log2(MCAM_H3F3A_EHMT2_subset)))
+
+```
+
+
+
+8. Plot correlation between MCAM & H3F3A.
+```{r}
+ggplot(MCAM_H3F3A_EHMT2_subset_transpose, aes(x=`H3-3A`, y=MCAM)) + 
+  geom_point() +
+  xlab("log2(H3F3A TPM)") +
+  ylab("log2(MCAM TPM)") + 
+  theme_classic(base_size = 15) +
+  geom_smooth(method=lm, se=FALSE, fullrange=TRUE, color='black') +
+  stat_cor(method = "pearson", size=5)
+```
+
+
+
+9. Calculate Pearson's coefficient and p-value.
+```{r}
+MCAM_H3F3A_correlation <- cor.test(MCAM_H3F3A_EHMT2_subset_transpose$MCAM, 
+                                   MCAM_H3F3A_EHMT2_subset_transpose$`H3-3A`, 
+                                   method = 'pearson')
+MCAM_H3F3A_correlation$p.value
+MCAM_H3F3A_correlation$estimate
+```
+
+
+
+10. Plot correlation between H3F3A & EHMT2.
+```{r}
+ggplot(MCAM_H3F3A_EHMT2_subset_transpose, aes(x=`H3-3A`, y=EHMT2)) + 
+  geom_point() +
+  xlab("log2(H3F3A TPM)") +
+  ylab("log2(EHMT2 TPM)") + 
+  theme_classic(base_size = 15) +
+  geom_smooth(method=lm, se=FALSE, fullrange=TRUE, color='black') +
+  stat_cor(method = "pearson", size=5)
+```
+
+
+
+11. Calculate Pearson's coefficient and p-value.
+```{r}
+H3F3A_EHMT2_correlation <- cor.test(MCAM_H3F3A_EHMT2_subset_transpose$EHMT2, 
+                                    MCAM_H3F3A_EHMT2_subset_transpose$`H3-3A`, 
+                                    method = 'pearson')
+H3F3A_EHMT2_correlation$p.value
+H3F3A_EHMT2_correlation$estimate
+```
