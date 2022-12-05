@@ -60,10 +60,13 @@ Project on investigating the role of H3F3A in Alveolar Rhabdomyosarcoma.
 ### 3. ChIP-seq_overlap_RNA-seq
 - This R-markdown contains the analysis code for intersecting the significantly differentially expressed genes from H3F3A knockdown RNA-seq and H3F3A ChIP-seq to identify the direct targets of H3F3A.
 
-### 4. [/data](./data)
+### 4. TCGA_analysis
+- This R-markdown contains the code for querying RNA-seq data from National Cancer Institute (NCI) Genomic Data Commons (GDC), parsing the TPM normalized count data and plotting the correlation between H3F3A and MCAM & EHMT2.
+
+### 5. [/data](./data)
 This folder contains the data used for the analysis.
 
-### 5. [/figures](./figures)
+### 6. [/figures](./figures)
 This folder contains the figures exported at various steps of the analysis.
 
 ## The main rules to follow are:
@@ -98,3 +101,10 @@ This folder contains the figures exported at various steps of the analysis.
 - `libssl-dev`
 
 - `libmagick++-dev`
+
+<br>
+
+## TODO:
+
+- [ ] Update R packages in REAMDE.
+- [ ] Update lib-xxx dependencies in REAMDE.

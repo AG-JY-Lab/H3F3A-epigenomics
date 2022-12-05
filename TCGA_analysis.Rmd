@@ -1,5 +1,5 @@
 ---
-title: "H3F3A ChIP-seq analysis"
+title: "H3F3A TCGA Analysis"
 author: "Joshua Soon"
 date: '2022-12-02'
 output: html_document
@@ -20,6 +20,7 @@ library(ggpubr)
 library(data.table)
 ```
 
+
 1. Query dataset from National Cancer Institute (NCI) Genomic Data Commons (GDC)
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 query <- GDCquery(
@@ -30,6 +31,7 @@ query <- GDCquery(
 )
 ```
 
+
 2. Download the count data.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 GDCdownload(
@@ -39,6 +41,7 @@ GDCdownload(
     files.per.chunk = 10
 )
 ```
+
 
 3. Prepare the data for analysis.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
@@ -65,7 +68,6 @@ write.csv(named_gene_expression_data, "TCGA-SARC_rna_seq_TPM_counts.csv", row.na
 ```
 
 
-
 7. Subset genes of interest and convert to a numeric dataframe with HGNC symbols as rownames.
 ```{r}
 MCAM_H3F3A_EHMT2_subset <- subset(named_gene_expression_data, HGNC_symbols %in% c("MCAM", "H3-3A", "EHMT2"))
@@ -73,9 +75,7 @@ MCAM_H3F3A_EHMT2_subset <- subset(named_gene_expression_data, HGNC_symbols %in% 
 MCAM_H3F3A_EHMT2_subset <- remove_rownames(MCAM_H3F3A_EHMT2_subset) %>% column_to_rownames(var = "HGNC_symbols")
 
 MCAM_H3F3A_EHMT2_subset_transpose <- as.data.frame(t(log2(MCAM_H3F3A_EHMT2_subset)))
-
 ```
-
 
 
 8. Plot correlation between MCAM & H3F3A.
@@ -90,7 +90,6 @@ ggplot(MCAM_H3F3A_EHMT2_subset_transpose, aes(x=`H3-3A`, y=MCAM)) +
 ```
 
 
-
 9. Calculate Pearson's coefficient and p-value.
 ```{r}
 MCAM_H3F3A_correlation <- cor.test(MCAM_H3F3A_EHMT2_subset_transpose$MCAM, 
@@ -99,7 +98,6 @@ MCAM_H3F3A_correlation <- cor.test(MCAM_H3F3A_EHMT2_subset_transpose$MCAM,
 MCAM_H3F3A_correlation$p.value
 MCAM_H3F3A_correlation$estimate
 ```
-
 
 
 10. Plot correlation between H3F3A & EHMT2.
@@ -112,7 +110,6 @@ ggplot(MCAM_H3F3A_EHMT2_subset_transpose, aes(x=`H3-3A`, y=EHMT2)) +
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE, color='black') +
   stat_cor(method = "pearson", size=5)
 ```
-
 
 
 11. Calculate Pearson's coefficient and p-value.
