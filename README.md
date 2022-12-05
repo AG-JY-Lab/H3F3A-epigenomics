@@ -3,7 +3,7 @@
 Project on investigating the role of H3F3A in Alveolar Rhabdomyosarcoma.
 
 ## Contents:
-### 1. H3F3A_RNA-seq
+### 1. [H3F3A_RNA-seq](./H3F3A_RNA-seq.Rmd)
 #### a. Merging STAR quantmode read counts
 - The read counts from STAR were merged into a single dataframe with `STARo2df`.
 #### b. Loading in count data, normalization & QC
@@ -54,13 +54,13 @@ Project on investigating the role of H3F3A in Alveolar Rhabdomyosarcoma.
 - `cnetplot` Gene concept network of selected Biological Processes BP of interest.
 ![](figures/RNA_seq_genes_enrichment/README_PNGs/gene_concept_network_GO_BP.png)
 
-### 2. H3F3A_ChIP-seq
+### 2. [H3F3A_ChIP-seq](./H3F3A_ChIP-seq.Rmd)
 - This R-markdown contains the analysis code for functional enrichment of the genes found by ChIP-seq of H3F3A with sequencing reads aligned with Bowtie2 and peak calling with Macs2. The peaks used as inputs are the from the `.narrowPeak` file from Macs2.
 
-### 3. ChIP-seq_overlap_RNA-seq
+### 3. [ChIP-seq_overlap_RNA-seq](./ChIP-seq_overlap_RNA-seq.Rmd)
 - This R-markdown contains the analysis code for intersecting the significantly differentially expressed genes from H3F3A knockdown RNA-seq and H3F3A ChIP-seq to identify the direct targets of H3F3A.
 
-### 4. TCGA_analysis
+### 4. [TCGA_analysis](./TCGA_analysis.Rmd)
 - This R-markdown contains the code for querying RNA-seq data from National Cancer Institute (NCI) Genomic Data Commons (GDC), parsing the TPM normalized count data and plotting the correlation between H3F3A and MCAM & EHMT2.
 
 ### 5. [/data](./data)
